@@ -158,3 +158,17 @@ void save_vec( int k, double* x ) {
 
 	fclose( oFile );
 }
+
+void ddot(double *veca, double *vecb, double *vecc, int size) 
+    {
+    int i;
+    int nrank;
+    
+    MPI_Comm_rank(MPI_COMM_WORLD, &nrank);
+    
+    // Compute partials from already distributed vectors
+    for(i = 0; i <= size/n2procs; i++)
+        *(vecc + nrank*size/n2procs + i) = *(veca + nrank*size/n2procs + i) * *(vecb + nrank*size/n2procs + i);
+    
+    //MIGHT NEED TO COLLECT TO ONE PROC
+    }
