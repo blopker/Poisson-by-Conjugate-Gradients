@@ -18,6 +18,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "linalg.h"
+
 double* load_vec( char* filename, int* k );
 void save_vec( int k, double* x );
 
@@ -63,9 +65,12 @@ int main( int argc, char* argv[] ) {
 			b[i] = cs240_getB((rank*n/p) + i, n);
 		}
 	} else {
+        if(rank==0)
+        {
 		printf( "\nCGSOLVE Usage: \n\t"
 			"Model Problem:\tmpirun -np [number_procs] cgsolve [k] [output_1=y_0=n]\n\t"
 			"Custom Input:\tmpirun -np [number_procs] cgsolve -i [input_filename] [output_1=y_0=n]\n\n");
+        }
 		exit(0);
 
 	}
