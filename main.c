@@ -132,21 +132,20 @@ int main( int argc, char* argv[] ) {
  */
 
 void cgsolve(double* b, int k, int slice, double* x){
-	// r = b; % r = b - A*x starts equal to b
-	// d = r; % first search direction is r
 	double r[slice], rnew[slice], d[slice], ad[slice];
 	int i;
 	for (i = 0; i < slice; ++i)
 	{
-		r[i] = b[i];
-		d[i] = r[i];
+		r[i] = b[i]; // r = b; % r = b - A*x starts equal to b
+		d[i] = r[i]; // d = r; % first search direction is r
 	}
 	double alpha, beta;
 	double error;
+
 	// while (still iterating)
 	do
 	{
-		matvec(d, slice, ad); // A*d
+		matvec(d, slice, ad); // Compute A*d once and store it for later
 		alpha = ddot(r, r, slice)/ddot(d, ad, slice); // alpha = r'*r / (d'*A*d);
 		daxpy(x, d, slice, 1, alpha); // x = x + alpha * d; % step to next guess
 
