@@ -102,7 +102,7 @@ int main( int argc, char* argv[] ) {
 	}
 
 	// CG Solve here!	
-	cgsolve(&b, k, slice, &x);
+	cgsolve(b, k, slice, x);
 
 	// End Timer
 	t2 = MPI_Wtime();
@@ -135,6 +135,7 @@ void cgsolve(double* b, int k, int slice, double* x){
 	// r = b; % r = b - A*x starts equal to b
 	// d = r; % first search direction is r
 	double r[slice], rnew[slice], d[slice], ad[slice];
+	int i;
 	for (i = 0; i < slice; ++i)
 	{
 		r[i] = b[i];
@@ -145,25 +146,25 @@ void cgsolve(double* b, int k, int slice, double* x){
 	// while (still iterating)
 	do
 	{
-		matvec(&d, &ad); // A*d
-		alpha = ddot(&r, &r, slice)/ddot(&d, &ad, slice); // alpha = r'*r / (d'*A*d);
-		daxpy(&x, &d, slice, 1, alpha); // x = x + alpha * d; % step to next guess
+		matvec(d, slice, ad); // A*d
+		alpha = ddot(r, r, slice)/ddot(d, ad, slice); // alpha = r'*r / (d'*A*d);
+		daxpy(x, d, slice, 1, alpha); // x = x + alpha * d; % step to next guess
 
 		for (i = 0; i < slice; ++i) // rnew = r - alpha * A*d; % update residual r
 		{
 			rnew[i] = r[i];
 		}
-		daxpy(&rnew, &ad, slice, 1, -alpha); 
+		daxpy(rnew, ad, slice, 1, -alpha); 
 
-		error = ddot(&rnew, &rnew, slice)
-		beta = error/ddot(&r, &r, slice) // beta = rnew'*rnew / r'*r;
+		error = ddot(rnew, rnew, slice);
+		beta = error/ddot(r, r, slice);  // beta = rnew'*rnew / r'*r;
 
 		for (i = 0; i < slice; ++i) // r = rnew;
 		{
 			r[i] = rnew[i];
 		}
 
-		daxpy(&d, &r, slice, beta, 1); // d = r + beta * d; % compute new search direction
+		daxpy(d, r, slice, beta, 1); // d = r + beta * d; % compute new search direction
 
 	} while (error > .01);
 
