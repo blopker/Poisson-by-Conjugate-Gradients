@@ -156,8 +156,8 @@ void cgsolve(double* b, int k, int slice, double* x){
 		}
 		daxpy(rnew, ad, slice, 1, -alpha); 
 
-		error = ddot(rnew, rnew, slice);
-		beta = error/ddot(r, r, slice);  // beta = rnew'*rnew / r'*r;
+		error = ddot(rnew, rnew, slice); // beta = rnew'*rnew / r'*r;
+		beta = error/ddot(r, r, slice);
 
 		for (i = 0; i < slice; ++i) // r = rnew;
 		{
