@@ -35,3 +35,7 @@ void daxpy(double* vecv, double* vecw, int slice, double a, double b)
     
     return;
 }
+
+void matvec(double* vec, int slice, double* out){
+    
+}
