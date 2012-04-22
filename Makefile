@@ -1,7 +1,7 @@
 CC = mpicc
 CFLAGS =
 LIBS = -lm
-OBJECTS = main.o hw2harness.o
+OBJECTS = main.o hw2harness.o linalg.o
 EXECUTABLE = cgsolve
 
 $(EXECUTABLE) : $(OBJECTS)
