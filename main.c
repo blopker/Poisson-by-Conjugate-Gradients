@@ -44,6 +44,7 @@ int main( int argc, char* argv[] ) {
 	// 1st case runs model problem, 2nd Case allows you to specify your own b vector
 	if ( argc == 4 && !strcmp( argv[1], "-i" ) ) {
 		double* vec = load_vec( argv[2], &k );
+		n = k*k;
 		b = (double *)malloc( (n/p) * sizeof(double) );
 
 		// each processor slices vec to build its own part of the b vector!
