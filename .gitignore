@@ -11,5 +11,6 @@
 *.la
 *.a
 
-# Compiled binary
+# Compiled binaries
 cgsolve
+linalgtest
