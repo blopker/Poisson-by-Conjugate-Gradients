@@ -4,7 +4,7 @@
 #include "mpi.h"
 
 //Function declarations
-double ddot(double* vecv, double* vecw, int size, int p);
-void daxpy(double* vecv, double* vecw, int size, double a, double b, int p);
+double ddot(double* vecv, double* vecw, int slice);
+void daxpy(double* vecv, double* vecw, int slice, double a, double b);
 
 #endif
