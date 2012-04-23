@@ -20,7 +20,7 @@ void save_vec( int k, double* x );
 
 int main( int argc, char* argv[] ) {
 	int writeOutX = 0;
-	int n, k;
+	int n, k, i;
 	int iterations = 1000;
 	double norm;
 	double* b;
@@ -43,12 +43,11 @@ int main( int argc, char* argv[] ) {
 		b = (double *)malloc( (slice) * sizeof(double) );
 
 		// each processor slices vec to build its own part of the b vector!
-		int i;
 		for (i = 0; i < slice; ++i)
 		{
 			b[i] = vec[(rank*slice) + i];
 		}
-
+		x = (double *)malloc( (slice) * sizeof(double) );
 		free(vec);
 
 	} else if (argc == 3) {
@@ -57,12 +56,11 @@ int main( int argc, char* argv[] ) {
 		n = k*k;
 		slice = n/p;
 		b = (double *)malloc( (slice) * sizeof(double) );
-
 		// each processor calls cs240_getB to build its own part of the b vector!
-		int i;
+		x = (double *)malloc( (slice) * sizeof(double) );
 		for (i = 1; i <= slice; ++i)
 		{
-			b[i] = cs240_getB((rank*slice) + i, n);
+			b[i-1] = cs240_getB((rank*slice) + i, n);
 		}
 	} else {
         if(rank==0)
@@ -75,29 +73,28 @@ int main( int argc, char* argv[] ) {
 
 	}
 
-	int i;
-	for (i = 0; i <= 100; ++i)
-	{
-		printf("%f\n", b[i]);
-	}
-	printf("debug3\n");
 	writeOutX = atoi( argv[argc-1] ); // Write X to file if true, do not write if unspecified.
 
 	// Start Timer
 	t1 = MPI_Wtime();
 
 	// Initialize x vector
-	x = (double *)malloc( (slice) * sizeof(double) );
 	for (i = 0; i < slice; ++i)
 	{
 		x[i] = 0;
 	}
 
+	printf( "\nCGSOLVE starting...\n");
 	// CG Solve here!	
 	cgsolve(b, k, slice, x);
-
+	printf( "\nCGSOLVE done!\n");
 	// End Timer
 	t2 = MPI_Wtime();
+
+	for (i = 0; i < slice; ++i)
+	{
+		printf( "x: %f\n", x[i]);	
+	}
 
 	if ( writeOutX ) {
 		save_vec( k, x );
@@ -109,6 +106,7 @@ int main( int argc, char* argv[] ) {
 	printf( "Elapsed time during CGSOLVE: %lf\n", t1-t2);
 
 	// Deallocate
+	printf( "Deallocating...\n");
 	free(b);
 	free(x);
 
@@ -135,9 +133,10 @@ void cgsolve(double* b, int k, int slice, double* x){
 	double error;
 
 	// while (still iterating)
+	int j = 0;
 	do
 	{
-		matvec(d, slice, ad); // Compute A*d once and store it for later
+		matvec(d, slice, k, ad); // Compute A*d once and store it for later
 		alpha = ddot(r, r, slice)/ddot(d, ad, slice); // alpha = r'*r / (d'*A*d);
 		daxpy(x, d, slice, 1, alpha); // x = x + alpha * d; % step to next guess
 
@@ -156,8 +155,8 @@ void cgsolve(double* b, int k, int slice, double* x){
 		}
 
 		daxpy(d, r, slice, beta, 1); // d = r + beta * d; % compute new search direction
-
-	} while (error > .01);
+		j++;
+	} while (j < 3);
 
 }
 
