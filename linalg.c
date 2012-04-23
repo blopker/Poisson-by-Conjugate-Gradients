@@ -6,9 +6,6 @@ double ddot(double* vecv, double* vecw, int slice)
 {
     int i;
     double partial = 0, a;
-    int nrank;
-    
-    //MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     
     // Compute partials from already distributed vectors
     for(i = 0; i < slice; i++)
@@ -24,10 +21,6 @@ double ddot(double* vecv, double* vecw, int slice)
 void daxpy(double* vecv, double* vecw, int slice, double a, double b) 
 {
     int i;
-    double partial = 0;
-    int nrank;
-    
-    //MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     
     // Compute partials from already distributed vectors
     for(i = 0; i < slice; i++)

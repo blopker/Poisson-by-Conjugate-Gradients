@@ -1,15 +1,7 @@
-/*
- * main.c
- *
- *  Created on: Apr 18, 2012
- *      Author: ninj0x
- */
-
-
 /* UCSB CS240A, Spring Quarter 2011
  * Main and supporting functions for the Conjugate Gradient Solver on a 5-point stencil
  *
- * NAME(s):
+ * NAME(s): Drew Waranis, Karl Bo Lopker
  * PERM(s):
  * April 4th, 2011
  */
