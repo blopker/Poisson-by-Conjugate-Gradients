@@ -23,8 +23,7 @@ int main( int argc, char* argv[] ) {
 	int n, k, i;
 	int iterations = 1000;
 	double norm;
-	double* b;
-	double* x;
+
 	double time;
 	double t1, t2;
 	int p;
@@ -40,28 +39,20 @@ int main( int argc, char* argv[] ) {
 		double* vec = load_vec( argv[2], &k );
 		n = k*k;
 		slice = n/p;
-		b = (double *)malloc( (slice) * sizeof(double) );
+//		b = (double *)malloc( (slice) * sizeof(double) );
 
 		// each processor slices vec to build its own part of the b vector!
 		for (i = 0; i < slice; ++i)
 		{
-			b[i] = vec[(rank*slice) + i];
+//			b[i] = vec[(rank*slice) + i];
 		}
-		x = (double *)malloc( (slice) * sizeof(double) );
+//		x = (double *)malloc( (slice) * sizeof(double) );
 		free(vec);
 
 	} else if (argc == 3) {
 		printf("Running model problem\n");
-		k = atoi( argv[1] );
-		n = k*k;
-		slice = n/p;
-		b = (double *)malloc( (slice) * sizeof(double) );
-		// each processor calls cs240_getB to build its own part of the b vector!
-		x = (double *)malloc( (slice) * sizeof(double) );
-		for (i = 1; i <= slice; ++i)
-		{
-			b[i-1] = cs240_getB((rank*slice) + i, n);
-		}
+
+
 	} else {
         if(rank==0)
         {
@@ -71,6 +62,19 @@ int main( int argc, char* argv[] ) {
         }
 		exit(0);
 
+	}
+	k = atoi( argv[1] );
+	n = k*k;
+	slice = n/p;
+	double* b;
+	double* x;
+
+	b = (double *)malloc( (slice) * sizeof(double) );
+	// each processor calls cs240_getB to build its own part of the b vector!
+	x = (double *)malloc( (slice) * sizeof(double) );
+	for (i = 1; i <= slice; ++i)
+	{
+		b[i-1] = cs240_getB((rank*slice) + i, n);
 	}
 
 	writeOutX = atoi( argv[argc-1] ); // Write X to file if true, do not write if unspecified.
@@ -91,7 +95,7 @@ int main( int argc, char* argv[] ) {
 	// End Timer
 	t2 = MPI_Wtime();
 
-	for (i = 0; i < slice; ++i)
+	for (i = slice-20; i < slice; ++i)
 	{
 		printf( "x: %f\n", x[i]);	
 	}
@@ -103,7 +107,7 @@ int main( int argc, char* argv[] ) {
 	// Output
 	printf( "Problem size (k): %d\n",k);
 	printf( "Norm of the residual after %d iterations: %lf\n",iterations,norm);
-	printf( "Elapsed time during CGSOLVE: %lf\n", t1-t2);
+	printf( "Elapsed time during CGSOLVE: %lf\n", t2-t1);
 
 	// Deallocate
 	printf( "Deallocating...\n");
@@ -122,7 +126,11 @@ int main( int argc, char* argv[] ) {
  */
 
 void cgsolve(double* b, int k, int slice, double* x){
-	double r[slice], rnew[slice], d[slice], ad[slice];
+	double* r, *rnew, *d, *ad;
+	r = (double *)malloc( (slice) * sizeof(double) );
+	rnew = (double *)malloc( (slice) * sizeof(double) );
+	d = (double *)malloc( (slice) * sizeof(double) );
+	ad = (double *)malloc( (slice) * sizeof(double) );
 	int i;
 	for (i = 0; i < slice; ++i)
 	{
@@ -157,6 +165,10 @@ void cgsolve(double* b, int k, int slice, double* x){
 		daxpy(d, r, slice, beta, 1); // d = r + beta * d; % compute new search direction
 		j++;
 	} while (j < 3);
+	free(r);
+	free(rnew);
+	free(d);
+	free(ad);
 
 }
 

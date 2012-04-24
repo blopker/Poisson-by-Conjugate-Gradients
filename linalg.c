@@ -57,8 +57,8 @@ void matvec(double* vec, int slice, int k, double* out){
             last[i] = buffer[i];
         }
     } else {
-        MPI_Send(buffer, k, MPI_DOUBLE, (rank-1)%p, 0, MPI_COMM_WORLD);
-        MPI_Recv(&last, k, MPI_DOUBLE, (rank+1)%p, 0, MPI_COMM_WORLD, &status);  
+        MPI_Send(buffer, k, MPI_DOUBLE, (rank-1+p)%p, 0, MPI_COMM_WORLD);
+        MPI_Recv(&last, k, MPI_DOUBLE, (rank+1+p)%p, 0, MPI_COMM_WORLD, &status);
     }  
       
     if (rank == p-1)
@@ -82,18 +82,18 @@ void matvec(double* vec, int slice, int k, double* out){
             first[i] = buffer[i];
         }
     } else {
-        MPI_Send(buffer, k, MPI_DOUBLE, (rank+1)%p, 0, MPI_COMM_WORLD);
-        MPI_Recv(&first, k, MPI_DOUBLE, (rank-1)%p, 0, MPI_COMM_WORLD, &status);   
+        MPI_Send(buffer, k, MPI_DOUBLE, (rank+1+p)%p, 0, MPI_COMM_WORLD);
+        MPI_Recv(&first, k, MPI_DOUBLE, (rank-1+p)%p, 0, MPI_COMM_WORLD, &status);
     }    
 
     double co[5];
     for (i = 0; i < slice; ++i)
     {
-        co[0] = ((i-k) < 0)? first[i] : vec[i-k];
+        co[0] = ((i-k) < 0)? first[i%k] : vec[i-k];
         co[1] = ((i%k-1) < 0)? 0 : vec[i-1];
         co[2] = 4*vec[i];
-        co[3] = ((i%k+1) >= k)? 0 : vec[i+1];
-        co[4] = ((i+k) > slice)? last[i] : vec[i+k];
+        co[3] = ((i%k+1) > k)? 0 : vec[i+1];
+        co[4] = ((i+k) > slice)? last[i%k] : vec[i+k];
         out[i] = co[2] - co[0] - co[1] - co[3] - co[4];
     }
 }
