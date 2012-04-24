@@ -31,7 +31,6 @@ int main( int argc, char* argv[] ) {
 	MPI_Init( &argc, &argv );
 	MPI_Comm_size(MPI_COMM_WORLD, &p);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	printf( "with %d of %d procs\n", rank+1, p);
 
 	// Read command line args.
 	// 1st case runs model problem, 2nd Case allows you to specify your own b vector
@@ -39,7 +38,8 @@ int main( int argc, char* argv[] ) {
 		vec = load_vec( argv[2], &k );
 		argv[1] = k;
 	} else if (argc == 3) {
-		printf("Running model problem\n");
+		if(rank==0)
+			printf("Running model problem\n");
 	} else {
         if(rank==0)
         {
@@ -84,29 +84,31 @@ int main( int argc, char* argv[] ) {
 		x[i] = 0;
 	}
 
-	printf( "\nCGSOLVE starting...\n");
+//	printf( "\nCGSOLVE starting...\n");
 	// CG Solve here!	
 	cgsolve(b, k, slice, x);
-	printf( "\nCGSOLVE done!\n");
+//	printf( "\nCGSOLVE done!\n");
 	// End Timer
 	t2 = MPI_Wtime();
 
-	for (i = slice-5; i < slice; ++i)
-	{
-		printf( "x: %f\n", x[i]);
-	}
-	MPI_Barrier(MPI_COMM_WORLD);
+//	for (i = slice-5; i < slice; ++i)
+//	{
+//		printf( "x: %f\n", x[i]);
+//	}
+
 	if ( writeOutX ) {
 		save_vec( k, slice, x );
 	}
 
 	// Output
-	printf( "Problem size (k): %d\n",k);
-	printf( "Norm of the residual after %d iterations: %lf\n",iterations,norm);
-	printf( "Elapsed time during CGSOLVE: %lf\n", t2-t1);
+	if (rank == 0) {
+		printf( "Problem size (k): %d\n",k);
+		printf( "Norm of the residual after %d iterations: %lf\n",iterations,norm);
+		printf( "Elapsed time during CGSOLVE: %lf\n", t2-t1);
 
-	// Deallocate
-	printf( "Deallocating...\n");
+		// Deallocate
+		printf( "Deallocating...\n");
+	}
 	free(b);
 	free(x);
 
@@ -165,7 +167,6 @@ void cgsolve(double* b, int k, int slice, double* x){
 	free(rnew);
 	free(d);
 	free(ad);
-
 }
 
 // Load Function
@@ -209,18 +210,17 @@ void save_vec( int k, int slice, double* x ) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	for (i = 0; i < p; ++i) {
 		if (rank == i) {
-			printf("Processor %d writing to file.\n",rank);
+
 			FILE* oFile;
+			printf("Processor %d writing to file.\n",rank);
 			if(rank == 0)
 				oFile = fopen("xApprox.txt","w");
+				fprintf( oFile, "k=%d\n", k );
 			else
 				oFile = fopen("xApprox.txt","a");
-
-			fprintf( oFile, "k=%d\n", k );
 			int j;
 			for (j = 0; j < slice; j++) {
 				fprintf( oFile, "%lf\n", x[j]);
-//				printf("x: %lf\n", x[j]);
 			}
 			fclose( oFile );
 		}
