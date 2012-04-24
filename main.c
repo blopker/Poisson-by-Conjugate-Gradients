@@ -9,6 +9,7 @@
 #include "hw2harness.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 // Separated linalg functions
 #include "linalg.h"
@@ -16,7 +17,7 @@
 void cgsolve(double* b, int k, int slice, double* x);
 double* load_vec( char* filename, int* k );
 void save_vec(  int k, int slice, double* x);
-int iterations = 30;
+int iterations = 3;
 double norm;
 
 int main( int argc, char* argv[] ) {
@@ -81,19 +82,15 @@ int main( int argc, char* argv[] ) {
 		x[i] = 0;
 	}
 
+	if (rank == 0) {
+		printf( "\nCGSOLVE starting...\n");
+	}
 	// Start Timer
 	t1 = MPI_Wtime();
-//	printf( "\nCGSOLVE starting...\n");
 	// CG Solve here!	
 	cgsolve(b, k, slice, x);
-//	printf( "\nCGSOLVE done!\n");
 	// End Timer
 	t2 = MPI_Wtime();
-
-//	for (i = slice-5; i < slice; ++i)
-//	{
-//		printf( "x: %f\n", x[i]);
-//	}
 
 	if ( writeOutX ) {
 		save_vec( k, slice, x );
@@ -104,10 +101,8 @@ int main( int argc, char* argv[] ) {
 		printf( "Problem size (k): %d\n",k);
 		printf( "Norm of the residual after %d iterations: %lf\n",iterations,norm);
 		printf( "Elapsed time during CGSOLVE: %lf\n", t2-t1);
-
-		// Deallocate
-		printf( "Deallocating...\n");
 	}
+	// Deallocate
 	free(b);
 	free(x);
 
@@ -167,7 +162,7 @@ void cgsolve(double* b, int k, int slice, double* x){
 	free(d);
 	free(ad);
     
-    norm = sqrt(error);
+	norm = sqrt(error)/sqrt(ddot(b, b, slice));
 }
 
 // Load Function
