@@ -16,15 +16,14 @@
 void cgsolve(double* b, int k, int slice, double* x);
 double* load_vec( char* filename, int* k );
 void save_vec( int k, int slice, int p, int rank, double* x);
-
+int iterations = 300;
 
 int main( int argc, char* argv[] ) {
 	int writeOutX = 0;
 	int n, k, i;
-	int iterations = 1000;
-	double norm;
 
-	double time;
+	double norm;
+	double* vec = NULL;
 	double t1, t2;
 	int p;
 	int rank;
@@ -36,23 +35,10 @@ int main( int argc, char* argv[] ) {
 	// Read command line args.
 	// 1st case runs model problem, 2nd Case allows you to specify your own b vector
 	if ( argc == 4 && !strcmp( argv[1], "-i" ) ) {
-		double* vec = load_vec( argv[2], &k );
-		n = k*k;
-		slice = n/p;
-//		b = (double *)malloc( (slice) * sizeof(double) );
-
-		// each processor slices vec to build its own part of the b vector!
-		for (i = 0; i < slice; ++i)
-		{
-//			b[i] = vec[(rank*slice) + i];
-		}
-//		x = (double *)malloc( (slice) * sizeof(double) );
-		free(vec);
-
+		vec = load_vec( argv[2], &k );
+		argv[1] = k;
 	} else if (argc == 3) {
 		printf("Running model problem\n");
-
-
 	} else {
         if(rank==0)
         {
@@ -63,6 +49,7 @@ int main( int argc, char* argv[] ) {
 		exit(0);
 
 	}
+
 	k = atoi( argv[1] );
 	n = k*k;
 	slice = n/p;
@@ -70,11 +57,19 @@ int main( int argc, char* argv[] ) {
 	double* x;
 
 	b = (double *)malloc( (slice) * sizeof(double) );
-	// each processor calls cs240_getB to build its own part of the b vector!
 	x = (double *)malloc( (slice) * sizeof(double) );
-	for (i = 1; i <= slice; ++i)
-	{
-		b[i-1] = cs240_getB((rank*slice) + i, n);
+
+	if (vec != NULL) { // Build the b vector.
+		for (i = 0; i < slice; ++i)
+		{
+			b[i] = vec[(rank*slice) + i];
+		}
+		free(vec);
+	} else {
+		for (i = 1; i <= slice; ++i)
+		{
+			b[i-1] = cs240_getB((rank*slice) + i, n);
+		}
 	}
 
 	writeOutX = atoi( argv[argc-1] ); // Write X to file if true, do not write if unspecified.
@@ -164,7 +159,7 @@ void cgsolve(double* b, int k, int slice, double* x){
 
 		daxpy(d, r, slice, beta, 1); // d = r + beta * d; % compute new search direction
 		j++;
-	} while (j < 3);
+	} while (j < iterations);
 	free(r);
 	free(rnew);
 	free(d);
