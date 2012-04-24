@@ -15,8 +15,8 @@
 
 void cgsolve(double* b, int k, int slice, double* x);
 double* load_vec( char* filename, int* k );
-void save_vec( int k, int slice, int p, int rank, double* x);
-int iterations = 300;
+void save_vec(  int k, int slice, double* x);
+int iterations = 30;
 
 int main( int argc, char* argv[] ) {
 	int writeOutX = 0;
@@ -31,6 +31,7 @@ int main( int argc, char* argv[] ) {
 	MPI_Init( &argc, &argv );
 	MPI_Comm_size(MPI_COMM_WORLD, &p);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	printf( "with %d of %d procs\n", rank+1, p);
 
 	// Read command line args.
 	// 1st case runs model problem, 2nd Case allows you to specify your own b vector
@@ -66,9 +67,9 @@ int main( int argc, char* argv[] ) {
 		}
 		free(vec);
 	} else {
-		for (i = 1; i <= slice; ++i)
+		for (i = 0; i < slice; ++i)
 		{
-			b[i-1] = cs240_getB((rank*slice) + i, n);
+			b[i] = cs240_getB((rank*slice) + i + 1, n);
 		}
 	}
 
@@ -90,13 +91,13 @@ int main( int argc, char* argv[] ) {
 	// End Timer
 	t2 = MPI_Wtime();
 
-	for (i = slice-20; i < slice; ++i)
+	for (i = slice-5; i < slice; ++i)
 	{
 		printf( "x: %f\n", x[i]);
 	}
-
+	MPI_Barrier(MPI_COMM_WORLD);
 	if ( writeOutX ) {
-		save_vec( k, slice, p, rank, x );
+		save_vec( k, slice, x );
 	}
 
 	// Output
@@ -202,19 +203,24 @@ double* load_vec( char* filename, int* k ) {
 }
 
 // Save a vector to a file.
-void save_vec( int k, int slice, int p, int rank, double* x ) {
-	int i;
+void save_vec( int k, int slice, double* x ) {
+	int i, p, rank;
+	MPI_Comm_size(MPI_COMM_WORLD, &p);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	for (i = 0; i < p; ++i) {
 		if (rank == i) {
+			printf("Processor %d writing to file.\n",rank);
 			FILE* oFile;
-			int i;
-			oFile = fopen("xApprox.txt","w");
+			if(rank == 0)
+				oFile = fopen("xApprox.txt","w");
+			else
+				oFile = fopen("xApprox.txt","a");
 
 			fprintf( oFile, "k=%d\n", k );
-
-			for (i = 0; i < slice; i++) {
-				fprintf( oFile, "%lf\n", x[i]);
-				printf("x: %lf\n", x[i]);
+			int j;
+			for (j = 0; j < slice; j++) {
+				fprintf( oFile, "%lf\n", x[j]);
+//				printf("x: %lf\n", x[j]);
 			}
 			fclose( oFile );
 		}
