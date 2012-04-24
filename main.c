@@ -15,7 +15,7 @@
 
 void cgsolve(double* b, int k, int slice, double* x);
 double* load_vec( char* filename, int* k );
-void save_vec( int k, double* x );
+void save_vec( int k, int slice, int p, int rank, double* x);
 
 
 int main( int argc, char* argv[] ) {
@@ -97,11 +97,11 @@ int main( int argc, char* argv[] ) {
 
 	for (i = slice-20; i < slice; ++i)
 	{
-		printf( "x: %f\n", x[i]);	
+		printf( "x: %f\n", x[i]);
 	}
 
 	if ( writeOutX ) {
-		save_vec( k, x );
+		save_vec( k, slice, p, rank, x );
 	}
 
 	// Output
@@ -207,16 +207,22 @@ double* load_vec( char* filename, int* k ) {
 }
 
 // Save a vector to a file.
-void save_vec( int k, double* x ) {
-	FILE* oFile;
+void save_vec( int k, int slice, int p, int rank, double* x ) {
 	int i;
-	oFile = fopen("xApprox.txt","w");
+	for (i = 0; i < p; ++i) {
+		if (rank == i) {
+			FILE* oFile;
+			int i;
+			oFile = fopen("xApprox.txt","w");
 
-	fprintf( oFile, "k=%d\n", k );
+			fprintf( oFile, "k=%d\n", k );
 
-	for (i = 0; i < k*k; i++) {
-    	fprintf( oFile, "%lf\n", x[i]);
- 	}
-
-	fclose( oFile );
+			for (i = 0; i < slice; i++) {
+				fprintf( oFile, "%lf\n", x[i]);
+				printf("x: %lf\n", x[i]);
+			}
+			fclose( oFile );
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
+	}
 }

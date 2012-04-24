@@ -2,6 +2,7 @@
 
 #include "linalg.h"
 
+
 double ddot(double* vecv, double* vecw, int slice) 
 {
     int i;
@@ -57,8 +58,13 @@ void matvec(double* vec, int slice, int k, double* out){
             last[i] = buffer[i];
         }
     } else {
-        MPI_Send(buffer, k, MPI_DOUBLE, (rank-1+p)%p, 0, MPI_COMM_WORLD);
-        MPI_Recv(&last, k, MPI_DOUBLE, (rank+1+p)%p, 0, MPI_COMM_WORLD, &status);
+    	if (rank % 2) {
+            MPI_Send(buffer, k, MPI_DOUBLE, (rank-1+p)%p, 0, MPI_COMM_WORLD);
+            MPI_Recv(&last, k, MPI_DOUBLE, (rank+1+p)%p, 0, MPI_COMM_WORLD, &status);
+    	} else {
+            MPI_Recv(&last, k, MPI_DOUBLE, (rank+1+p)%p, 0, MPI_COMM_WORLD, &status);
+            MPI_Send(buffer, k, MPI_DOUBLE, (rank-1+p)%p, 0, MPI_COMM_WORLD);
+    	}
     }  
       
     if (rank == p-1)
@@ -82,18 +88,29 @@ void matvec(double* vec, int slice, int k, double* out){
             first[i] = buffer[i];
         }
     } else {
-        MPI_Send(buffer, k, MPI_DOUBLE, (rank+1+p)%p, 0, MPI_COMM_WORLD);
-        MPI_Recv(&first, k, MPI_DOUBLE, (rank-1+p)%p, 0, MPI_COMM_WORLD, &status);
+    	if (rank % 2) {
+            MPI_Send(buffer, k, MPI_DOUBLE, (rank+1+p)%p, 0, MPI_COMM_WORLD);
+            MPI_Recv(&first, k, MPI_DOUBLE, (rank-1+p)%p, 0, MPI_COMM_WORLD, &status);
+    	} else {
+            MPI_Recv(&first, k, MPI_DOUBLE, (rank-1+p)%p, 0, MPI_COMM_WORLD, &status);
+            MPI_Send(buffer, k, MPI_DOUBLE, (rank+1+p)%p, 0, MPI_COMM_WORLD);
+    	}
+
     }    
 
-    double co[5];
+    int col;
     for (i = 0; i < slice; ++i)
     {
-        co[0] = ((i-k) < 0)? first[i%k] : vec[i-k];
-        co[1] = ((i%k-1) < 0)? 0 : vec[i-1];
-        co[2] = 4*vec[i];
-        co[3] = ((i%k+1) > k)? 0 : vec[i+1];
-        co[4] = ((i+k) > slice)? last[i%k] : vec[i+k];
-        out[i] = co[2] - co[0] - co[1] - co[3] - co[4];
+    	col = i%k;
+		// Multiply point by 4
+		out[i] = 4*vec[i];
+		// Deduct point above
+		out[i] -= (i-k < 0)? first[col] : vec[i-k];
+		// Deduct point below
+		out[i] -= (i+k > slice)? last[col] : vec[i+k];
+		// Deduct point to left
+		out[i] -= (col == 0)? 0 : vec[i-1];
+		// Deduct point to right
+		out[i] -= (col == k-1)? 0 : vec[i+1];
     }
 }
