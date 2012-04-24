@@ -75,15 +75,14 @@ int main( int argc, char* argv[] ) {
 
 	writeOutX = atoi( argv[argc-1] ); // Write X to file if true, do not write if unspecified.
 
-	// Start Timer
-	t1 = MPI_Wtime();
-
 	// Initialize x vector
 	for (i = 0; i < slice; ++i)
 	{
 		x[i] = 0;
 	}
 
+	// Start Timer
+	t1 = MPI_Wtime();
 //	printf( "\nCGSOLVE starting...\n");
 	// CG Solve here!	
 	cgsolve(b, k, slice, x);
