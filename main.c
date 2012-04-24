@@ -213,11 +213,12 @@ void save_vec( int k, int slice, double* x ) {
 
 			FILE* oFile;
 			printf("Processor %d writing to file.\n",rank);
-			if(rank == 0)
+			if(rank == 0){
 				oFile = fopen("xApprox.txt","w");
 				fprintf( oFile, "k=%d\n", k );
-			else
+			} else {
 				oFile = fopen("xApprox.txt","a");
+			}
 			int j;
 			for (j = 0; j < slice; j++) {
 				fprintf( oFile, "%lf\n", x[j]);
