@@ -17,12 +17,12 @@ void cgsolve(double* b, int k, int slice, double* x);
 double* load_vec( char* filename, int* k );
 void save_vec(  int k, int slice, double* x);
 int iterations = 30;
+double norm;
 
 int main( int argc, char* argv[] ) {
 	int writeOutX = 0;
 	int n, k, i;
 
-	double norm;
 	double* vec = NULL;
 	double t1, t2;
 	int p;
@@ -167,6 +167,8 @@ void cgsolve(double* b, int k, int slice, double* x){
 	free(rnew);
 	free(d);
 	free(ad);
+    
+    norm = sqrt(error);
 }
 
 // Load Function
